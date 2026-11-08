@@ -4,6 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Hidden · BSB</title>
+<link rel="canonical" href="https://keyportbiblechurch.github.io/Hidden/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Hidden">
+<meta property="og:title" content="Hidden: Berean Standard Bible">
+<meta property="og:description" content="Read Scripture, memorize it, and share it with others. Free, private, and works offline.">
+<meta property="og:url" content="https://keyportbiblechurch.github.io/Hidden/">
+<meta property="og:image" content="https://keyportbiblechurch.github.io/Hidden/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Hidden, a Bible app with Scripture memory and verse cards">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Hidden: Berean Standard Bible">
+<meta name="twitter:description" content="Read Scripture, memorize it, and share it with others. Free, private, and works offline.">
+<meta name="twitter:image" content="https://keyportbiblechurch.github.io/Hidden/og-image.png">
 <meta name="description" content="Hidden: the Berean Standard Bible with Scripture memory, verse cards, and read-aloud. Free, private, and works offline.">
 <meta name="theme-color" content="#1f2a3a">
 <link rel="manifest" href="manifest.webmanifest">
@@ -243,6 +257,18 @@ canvas{box-shadow:0 8px 28px rgba(0,0,0,.14)}
 .tab2 button.on{color:var(--ink);border-bottom-color:var(--ink)}
 .pnl{padding-bottom:12px}
 .pnl .lbl:first-child{margin-top:18px}
+/* ===== more page ===== */
+.li.nav::after{content:"";flex:none;width:7px;height:7px;border-right:1.8px solid var(--mut);border-top:1.8px solid var(--mut);transform:rotate(45deg);margin-left:4px}
+.li.nav small{white-space:normal}
+.card.inst,.card.note{padding:18px 20px}
+.card.inst .ref{margin-bottom:8px}
+.steps,.plain{margin:8px 0 0;padding-left:20px;font-family:var(--ui);font-size:15px;line-height:1.5}
+.plain{color:var(--mut);font-size:14px}.steps li,.plain li{margin:6px 0}
+.card.note b{font-family:var(--ui);font-weight:600;font-size:15px}
+.fine svg{opacity:.95}
+.sheet .row .btn{padding:8px 14px;min-height:40px}
+.cpo textarea{width:100%;max-width:420px;height:130px;border-radius:10px;border:0;padding:12px;font:15px/1.5 var(--ui);color:#111;background:#fff;margin:12px 0 16px;resize:none}
+.cpo p{max-width:420px;margin:0}
 
 </style>
 </head>
@@ -2551,15 +2577,16 @@ let AFTER=null;
 function render(keep){const y=window.scrollY;AFTER=null;let body="";
   try{body=S.tab=="today"?todayView():S.tab=="read"?readView():S.tab=="mem"?memView():S.tab=="card"?cardView():moreView()}catch(e){body=`<p class="mut">Something went wrong: ${esc(e.message)}</p>`;console.error(e)}
   const due=dueList().length;
-  $("app").innerHTML=`${body}<div class="tabs">${TABS.map(t=>`<button data-a="tab" data-v="${t[0]}" class="${S.tab==t[0]?"on":""}" aria-label="${t[1]}">${svg(t[0],23)}<span class="tl">${t[1]}</span>${t[0]=="mem"&&due?`<span class="dot">${due}</span>`:""}</button>`).join("")}</div>`+(S.ov?`<div class="ov" data-a="ovx"><img src="${S.ov}" alt="Card"><p>Press and hold the image to save or share.<br>Tap anywhere to close.</p></div>`:"");
+  $("app").innerHTML=`${body}<div class="tabs">${TABS.map(t=>`<button data-a="tab" data-v="${t[0]}" class="${S.tab==t[0]?"on":""}" aria-label="${t[1]}">${svg(t[0],23)}<span class="tl">${t[1]}</span>${t[0]=="mem"&&due?`<span class="dot">${due}</span>`:""}</button>`).join("")}</div>`+(S.ov?`<div class="ov" data-a="ovx"><img src="${S.ov}" alt="Card"><p>Press and hold the image to save or share.<br>Tap anywhere to close.</p></div>`:"")+(S.cpt?`<div class="ov cpo"><p>${esc(S.cpt.m)}</p><textarea id="cpt" readonly>${esc(S.cpt.t)}</textarea><button class="btn" data-a="cptx">Done</button></div>`:"");
   if(typeof SP!=="undefined"&&SP)spMark();
   document.body.classList.toggle("hassel",!!(S.tab=="read"&&S.sub=="chap"&&S.sel));if(S.sel||S.tab!="read"||S.sub!="chap")document.body.classList.remove("hidebars");
   if(AFTER)AFTER();if(keep)window.scrollTo(0,y)}
 (function(){let ly=0;addEventListener("scroll",()=>{const y=scrollY,b=document.body,r=S.tab=="read"&&S.sub=="chap";b.classList.toggle("inread",r);
 if(!r||y<60||b.classList.contains("hassel")){b.classList.remove("hidebars");ly=y;return}
 if(y>ly+8){b.classList.add("hidebars");ly=y}else if(y<ly-8){b.classList.remove("hidebars");ly=y}},{passive:true})})();
-A.tab=v=>{S.tab=v;S.sel=null;S.xp=null;S.pk=null;S.pv=false;S.ct=0;render();window.scrollTo(0,0)};
+A.tab=v=>{S.tab=v;S.sel=null;S.xp=null;S.pk=null;S.pv=false;S.ct=0;S.mv="";render();window.scrollTo(0,0)};
 A.ovx=()=>{S.ov=null;render(true)};
+A.cptx=()=>{S.cpt=null;render(true)};
 
 /* ===== topical index (references only; text comes from the BSB data) ===== */
 const TOPICS=[
@@ -2661,7 +2688,7 @@ function sheetView(ch,code){
   const more=!!S.more;
   return `<div class="sheet"><div class="ref">${esc(lbl)} <span class="hint">${z>a?"":"Tap another verse to extend"}</span></div>
   <div class="ctl" style="justify-content:flex-start;gap:10px;flex-wrap:nowrap;overflow-x:auto">${swatches}<button class="chip" data-a="hlc" data-v="">Clear</button><button class="chip ${h0.b?"on":""}" data-a="bm">★</button><button class="chip" data-a="cpy">Copy</button>${TTS?`<button class="chip" data-a="listenv">Listen</button>`:""}<button class="chip" data-a="ssel">Done</button></div>
-  <div class="row" style="justify-content:flex-start"><button class="btn" data-a="mem1">Memorize</button><button class="btn" data-a="mkc">Make card</button><button class="btn ghost" data-a="smore">${more||h0.n?"Less":"Note / More"}</button></div>
+  <div class="row" style="justify-content:flex-start"><button class="btn" data-a="mem1">Memorize</button><button class="btn" data-a="mkc">Card</button><button class="btn" data-a="shv">Share</button><button class="btn ghost" data-a="smore">${more||h0.n?"Less":"More"}</button></div>
   ${more||h0.n?`<textarea data-i="note" placeholder="Add a note on ${esc(lbl)}…" style="margin-top:10px;min-height:70px">${esc(h0.n||"")}</textarea>
   `+(fn?`<div class="lbl">Footnotes</div>${fn}`:"")+(xr?`<div class="lbl">Cross-references</div>${xr}`:""):""}</div>`}
 
@@ -2684,7 +2711,7 @@ A.cpy=()=>{const p=resolve({id:"x",code:BIBLE[S.b][0],c:S.c+1,s:BIBLE[S.b][2][S.
   (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Copied"),()=>toast("Copy isn’t available here"))};
 A.mem1=()=>{const ch=BIBLE[S.b][2][S.c],i=addPassage(BIBLE[S.b][0],S.c+1,ch.n[S.sel.a],ch.n[S.sel.z]);S.pi=i;S.pv=true;S.lv=0;S.mode="fade";S.chk=false;S.peek=new Set();S.msg="";S.rv=null;S.sel=null;S.tab="mem";render();window.scrollTo(0,0)};
 A.mkc=()=>{const ch=BIBLE[S.b][2][S.c];S.cd={code:BIBLE[S.b][0],c:S.c+1,s:ch.n[S.sel.a],e:ch.n[S.sel.z]};S.sel=null;S.tab="card";render();window.scrollTo(0,0)};
-A.go=v=>{const p=v.split(",").map(Number);openCh(p[0],p[1]);S.tab="read";S.sub="chap";if(p[2]>=0){if(p[4]){S.fl={a:p[2],z:p[3]};S.scr=p[2]}else if(p[3]!=null&&!isNaN(p[3])){S.sel={a:p[2],z:p[3]};S.scr=p[2]}else{S.scr=p[2];S.fl={a:p[2],z:p[2]}}}render();window.scrollTo(0,0)};
+A.go=v=>{const p=v.split(",").map(Number);openCh(p[0],p[1]);S.tab="read";S.sub="chap";if(p[2]>=0){if(p[4]){S.fl={a:p[2],z:p[3]};S.scr=p[2]}else if(p[3]!=null&&!isNaN(p[3])){S.sel={a:p[2],z:p[3]};S.scr=p[2]}else{S.scr=p[2];S.fl={a:p[2],z:p[2]}}}const tgt=S.scr!=null;render();if(!tgt)window.scrollTo(0,0)};
 
 /* search */
 const smode=()=>SET.sm==1?1:0;
@@ -3051,7 +3078,7 @@ function todayView(){
   const dt=new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
   let o=`<div class="ttl"><h2>Today</h2><span>${esc(dt)}${st?` · ${st}-day streak`:""}</span></div>`;
   o+=`<div class="card votd"><div class="ref">Verse of the day</div><div class="vt">${esc(vv.v.join(" "))}</div><div class="ref" style="margin:8px 0 0">${esc(vv.ref)}</div>
-  <div class="row" style="justify-content:flex-start"><button class="btn" data-a="tdr">Read in context</button><button class="btn ghost" data-a="tdm">Memorize</button>${TTS?`<button class="btn ghost" data-a="tdl">Listen</button>`:""}</div></div>`;
+  <div class="row" style="justify-content:flex-start"><button class="btn" data-a="tdr">Read in context</button><button class="btn ghost" data-a="tdm">Memorize</button><button class="btn ghost" data-a="tdsh">Share</button>${TTS?`<button class="btn ghost" data-a="tdl">Listen</button>`:""}</div></div>`;
   if(due.length)o+=`<div class="card"><div class="ref">Review</div><div>${due.length} ${due.length==1?"passage is":"passages are"} due today.</div><div class="row" style="justify-content:flex-start"><button class="btn" data-a="tdrv">Start review</button></div></div>`;
   const b=BIBLE[S.b];
   o+=`<div class="card"><div class="ref">Continue reading</div><div class="row" style="justify-content:flex-start"><button class="btn" data-a="go" data-v="${S.b},${S.c},-1">${esc(b[1])} ${S.c+1}</button></div></div>`;
@@ -3062,26 +3089,61 @@ A.tdm=()=>{S.tab="mem";A.vtdm()};
 A.tdrv=()=>{S.tab="mem";A.rvstart()};
 A.tdl=()=>{const v=resolve(Object.assign({id:"v"},votd()));if(v.ix.length)spStart(bidx(v.code),v.c-1,v.ix[0],v.ix[v.ix.length-1],false)};
 
-/* ===== more: display, backup ===== */
+/* ===== more: grouped settings, install, backup, share, about ===== */
+let DIP=null;
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();DIP=e;if(S.tab=="more")render(true)});
+addEventListener("appinstalled",()=>{DIP=null;toast("Installed");if(S.tab=="more")render(true)});
+let isStandalone=()=>{try{return matchMedia("(display-mode: standalone)").matches||navigator.standalone===true}catch(e){return false}};
+let isIOS=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform=="MacIntel"&&navigator.maxTouchPoints>1);
+let onSite=()=>{try{const u=new URL(appUrl());return u.origin==location.origin}catch(e){return false}};
+const lastBk=()=>{try{return localStorage.getItem("hid.bk")||""}catch(e){return""}};
+const daysSince=d=>d?Math.floor((Date.parse(today())-Date.parse(d))/864e5):9999;
+const nSaved=()=>Object.keys(HL).length;
+const needBk=()=>nSaved()>=3&&daysSince(lastBk())>=30;
+const mrow=(v,t,d,st)=>`<button class="li nav" data-a="mo" data-v="${v}"><span class="lt"><b>${t}</b><small>${d}</small></span>${st?`<span class="mut">${st}</span>`:""}</button>`;
+const mback=t=>`<div class="bar"><button class="back" data-a="mx">More</button></div><div class="ttl"><h2>${t}</h2></div>`;
+function installCard(){
+  if(isStandalone())return"";
+  let body="";
+  if(DIP&&onSite())body=`<p class="mut" style="margin:0 0 12px">Add Hidden to your home screen. It opens like any other app and works offline.</p><button class="btn" data-a="inst">Install app</button>`;
+  else if(!onSite()&&appUrl())body=`<p class="mut" style="margin:0 0 12px">Install Hidden from its website to keep it on your home screen and use it offline.</p><button class="btn" data-a="openweb">Open website</button>`;
+  else if(isIOS())body=`<p class="mut" style="margin:0">To install on iPhone or iPad:</p><ol class="steps"><li>Tap the Share button in Safari.</li><li>Choose <b>Add to Home Screen</b>.</li><li>Tap <b>Add</b>.</li></ol>`;
+  else body=`<p class="mut" style="margin:0">Open your browser’s menu and choose <b>Install app</b> or <b>Add to Home screen</b>. Hidden then opens like any other app and works offline.</p>`;
+  return `<div class="card inst"><div class="ref">Get the app</div>${body}</div>`}
+function moreHome(){
+  let o=`<div class="ttl"><h2>More</h2></div>`+installCard();
+  if(needBk())o+=`<div class="card note"><b>Back up your highlights and notes.</b><p class="mut" style="margin:4px 0 12px">They are saved on this device only, and ${lastBk()?"your last backup was "+daysSince(lastBk())+" days ago":"you haven’t made a backup yet"}.</p><button class="btn" data-a="bkdl">Download backup</button></div>`;
+  const lb=lastBk();
+  o+=`<div class="list" style="margin-top:14px">`
+   +mrow("look","Appearance","Theme, font, text size, and spacing")
+   +(TTS?mrow("voice","Read aloud","Voice and speed"):"")
+   +mrow("data","Backup and data",lb?"Last backup "+fmtDate(lb):"Not backed up yet")
+   +mrow("about","About","The Berean Standard Bible and why it is free to use")
+   +`</div>`;
+  if(appUrl())o+=`<h3>Share Hidden</h3><p class="mut" style="margin:0">Send the app to a friend, your church, or your small group.</p>
+  <div class="row" style="justify-content:flex-start"><button class="btn" data-a="shapp">Share</button><button class="btn ghost" data-a="cpapp">Copy link</button></div><p class="mut" style="margin:0;word-break:break-all;font-size:13px">${esc(appUrl())}</p>`;
+  return o+`<div class="fine"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="44" height="44" aria-hidden="true" style="border-radius:10px;display:block;margin:0 auto 10px"><defs><linearGradient id="gm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#26354a"/><stop offset="1" stop-color="#141d2a"/></linearGradient></defs><rect width="512" height="512" fill="url(#gm)"/>
+<g fill="#f4efe4"><path d="M124 126H168C188 126 212 148 212 186V386C212 374 190 356 160 356H124Z"/><path d="M388 126H344C324 126 300 148 300 186V386C300 374 322 356 352 356H388Z"/><rect x="208" y="210" width="96" height="30"/><rect x="242" y="170" width="28" height="186"/></g></svg>Hidden · Berean Standard Bible</div>`}
 function moreView(){
-  let o=`<div class="ttl"><h2>More</h2></div><h3>Display</h3>${sg("mtheme",["Auto","Light","Sepia","Dark"],["auto","light","sepia","dark"].indexOf(SET.theme))}
+  const v=S.mv||"";
+  if(v=="look")return mback("Appearance")+`  ${sg("mtheme",["Auto","Light","Sepia","Dark"],["auto","light","sepia","dark"].indexOf(SET.theme))}
   <div class="lbl">Reading font</div>${sg("mfont",FONTS.map(f=>f[1]),FONTS.findIndex(f=>f[0]==SET.font))}
   <div class="lbl">Text size</div><input type="range" min="16" max="34" value="${SET.size}" data-i="msize">
   <div class="lbl">Line spacing</div>${sg("mlh",["Tight","Normal","Roomy"],SET.lh)}
   <div class="lbl">Alignment</div>${sg("mta",["Left","Justified"],SET.ta)}
   <div class="lbl">Layout</div>${sg("mvl",["Paragraphs","Verse per line"],SET.vl?1:0)}
   <div class="row" style="justify-content:flex-start"><button class="chip ${SET.vn?"on":""}" data-a="mvn">Verse numbers ${SET.vn?"on":"off"}</button></div>
-  <div class="card prev"><div class="text" style="font-size:${SET.size}px"><sup>16</sup>For God so loved the world that He gave His one and only Son, that everyone who believes in Him shall not perish but have eternal life.</div></div>
-  ${TTS?`<h3>Read aloud (device voice)</h3><div class="lbl">Speed</div>${sg("mrate",RATES.map(r=>r+"×"),RATES.indexOf(SET.rate))}
+  <div class="card prev"><div class="text" style="font-size:${SET.size}px"><sup>16</sup>For God so loved the world that He gave His one and only Son, that everyone who believes in Him shall not perish but have eternal life.</div></div>`;
+  if(v=="voice"&&TTS)return mback("Read aloud")+`  <div class="lbl">Speed</div>${sg("mrate",RATES.map(r=>r+"×"),RATES.indexOf(SET.rate))}
   <div class="lbl">Voice</div><select data-c="mvoice" style="max-width:100%"><option value="">Automatic (best available)</option>${voiceList().map(v=>`<option value="${esc(v.name)}" ${v.name==SET.voice?"selected":""}>${esc(v.name)} (${esc(v.lang)})</option>`).join("")}</select>
-  <div class="row" style="justify-content:flex-start"><button class="chip ${SET.auto?"on":""}" data-a="mauto">Continue to next chapter: ${SET.auto?"on":"off"}</button><button class="chip" data-a="mtest">Test voice</button></div><p class="mut" style="margin:6px 0 0">Voices come from your phone, so quality varies. Voices at the top of the list are the most natural. On iPhone, add a better one in Settings → Accessibility → Spoken Content → Voices (choose Enhanced or Premium). On Android, Settings → Text-to-speech → Google voices.</p>`:""}
-  <h3>Backup</h3><p class="mut" style="margin:0">Your progress, notes, and highlights are saved on this device only. Make a backup to move them or keep them safe.</p>
-  <div class="row" style="justify-content:flex-start"><button class="btn ghost" data-a="bkdl">Download backup</button><button class="btn ghost" data-a="bkcp">Copy backup text</button><label class="btn ghost" style="display:inline-flex;align-items:center">Restore file<input type="file" accept=".json,application/json" data-c="bkfile" hidden></label></div>
-  <textarea data-i="bktxt" placeholder="Or paste backup text here, then tap Restore" style="margin-top:10px;min-height:70px"></textarea><div class="row" style="justify-content:flex-start"><button class="btn ghost" data-a="bkrs">Restore from text</button></div>
-  <h3>About the BSB</h3>
-  <details class="card" style="padding:12px 14px"><summary style="cursor:pointer;font-weight:600">Why it’s public domain, and what that means</summary>
-  <div class="mut" style="margin-top:10px;line-height:1.55">
-  <p style="margin:0 0 10px"><b>What happened.</b> On April 30, 2023, the publishers of the Berean Standard Bible officially dedicated the text to the public domain. It is produced by the Berean Bible Translation Committee in cooperation with Bible Hub, Discovery Bible, and OpenBible.com.</p>
+  <div class="row" style="justify-content:flex-start"><button class="chip ${SET.auto?"on":""}" data-a="mauto">Continue to next chapter: ${SET.auto?"on":"off"}</button><button class="chip" data-a="mtest">Test voice</button></div><p class="mut" style="margin:6px 0 0">Voices come from your phone, so quality varies. Voices at the top of the list are the most natural. On iPhone, add a better one in Settings → Accessibility → Spoken Content → Voices (choose Enhanced or Premium). On Android, Settings → Text-to-speech → Google voices.</p>`;if(v=="data")return mback("Backup and data")+`<p class="mut" style="margin:0">Your highlights, notes, bookmarks, and memorization progress are saved on this device only. A backup lets you move them to a new phone or restore them if they are ever cleared.</p>
+  <p class="mut" style="margin:10px 0 0"><b>Last backup:</b> ${lastBk()?fmtDate(lastBk()):"none yet"}</p>
+  <div class="row" style="justify-content:flex-start"><button class="btn" data-a="bkdl">Download backup</button><button class="btn ghost" data-a="bkcp">Copy backup text</button></div>
+  <details class="card" style="padding:14px 16px"><summary>Restore from a backup</summary><div style="margin-top:12px"><label class="btn ghost" style="display:inline-flex;align-items:center">Choose backup file<input type="file" accept=".json,application/json" data-c="bkfile" hidden></label>
+  <textarea data-i="bktxt" placeholder="Or paste backup text here" style="margin-top:12px;min-height:80px"></textarea><div class="row" style="justify-content:flex-start"><button class="btn ghost" data-a="bkrs">Restore from text</button></div></div></details>
+  <h3>Keeping your data safe</h3><ul class="plain"><li>Install Hidden to your home screen. It protects your data from automatic cleanup.</li><li>Back up after a big round of highlights or notes.</li><li>Clearing your browser’s website data erases everything here, so back up first.</li></ul>`;
+  if(v=="about")return mback("About")+`<p class="mut" style="margin:0">Hidden is a Bible reader built for Scripture memory and sharing. It has no accounts and no ads, and it keeps your data on your device.</p>
+  <h3>The Berean Standard Bible</h3><div class="mut" style="line-height:1.55">  <p style="margin:0 0 10px"><b>What happened.</b> On April 30, 2023, the publishers of the Berean Standard Bible officially dedicated the text to the public domain. It is produced by the Berean Bible Translation Committee in cooperation with Bible Hub, Discovery Bible, and OpenBible.com.</p>
   <p style="margin:0 0 10px"><b>Why.</b> The publishers’ stated hope is that it will “expand the possibilities for overseas publishing.” In other words, anyone, including ministries and publishers who could not afford licensing fees, can print, translate, and build with God’s Word without asking permission. They also invite the community to help keep an official text maintained.</p>
   <p style="margin:0 0 10px"><b>What it means for apps.</b></p>
   <ul style="margin:0 0 10px;padding-left:18px">
@@ -3092,11 +3154,15 @@ function moreView(){
   <li>Attribution is appreciated but not required. Hidden credits the translation below.</li>
   </ul>
   <p style="margin:0 0 10px"><b>One request.</b> If you change the wording, don’t call it the Berean Bible. Apps that keep the text verbatim may use the name.</p>
-  <p style="margin:0"><b>Why it matters.</b> Most popular English translations (ESV, NIV, NLT, and others) are copyrighted and licensed, so apps must negotiate limits or pay royalties. The BSB lets small ministries and individual developers build freely. Public-domain translations such as the KJV and WEB also exist, but the BSB is a modern-English translation.</p>
-  </div></details>
+  <p style="margin:0"><b>Why it matters.</b> Most popular English translations (ESV, NIV, NLT, and others) are copyrighted and licensed, so apps must negotiate limits or pay royalties. The BSB lets small ministries and individual developers build freely. Public-domain translations such as the KJV and WEB also exist, but the BSB is a modern-English translation.</p></div>
   <div class="fine"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="44" height="44" aria-hidden="true" style="border-radius:10px;display:block;margin:0 auto 10px"><defs><linearGradient id="gm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#26354a"/><stop offset="1" stop-color="#141d2a"/></linearGradient></defs><rect width="512" height="512" fill="url(#gm)"/>
 <g fill="#f4efe4"><path d="M124 126H168C188 126 212 148 212 186V386C212 374 190 356 160 356H124Z"/><path d="M388 126H344C324 126 300 148 300 186V386C300 374 322 356 352 356H388Z"/><rect x="208" y="210" width="96" height="30"/><rect x="242" y="170" width="28" height="186"/></g></svg>The Holy Bible, Berean Standard Bible, BSB is produced in cooperation with Bible Hub, Discovery Bible, OpenBible.com, and the Berean Bible Translation Committee. This text of God’s Word has been dedicated to the public domain.</div>`;
-  return o}
+  return moreHome()}
+A.mo=v=>{S.mv=v;render();window.scrollTo(0,0)};
+A.mx=()=>{S.mv="";render();window.scrollTo(0,0)};
+A.inst=()=>{if(!DIP)return;DIP.prompt();DIP.userChoice.then(()=>{DIP=null;render(true)}).catch(()=>{})};
+A.openweb=()=>{try{window.open(appUrl(),"_blank","noopener")}catch(e){location.href=appUrl()}};
+
 A.mtheme=v=>{SET.theme=["auto","light","sepia","dark"][+v];sv.set();applyTheme();render(true)};
 I.msize=v=>{SET.size=+v;sv.set()};
 const sv2=()=>{sv.set();applyTheme();render(true)};
@@ -3106,16 +3172,34 @@ A.mtest=()=>{SP=null;spBar();speechSynthesis.cancel();const u=new SpeechSynthesi
 /* backup */
 const bkObj=()=>{const d={"hid.set":JSON.stringify(SET),"hid.ps":JSON.stringify(PS),"hid.p":JSON.stringify(PG),"hid.st":JSON.stringify(ST),"hid.hl":JSON.stringify(HL),"hid.cf":JSON.stringify(CF),"hid.pos":JSON.stringify({b:S.b,c:S.c})};
   return{app:"hidden",v:1,date:today(),data:d}};
-A.bkdl=async()=>deliver("hidden-backup-"+today()+".json",new Blob([JSON.stringify(bkObj())],{type:"application/json"}));
-A.bkcp=()=>{const t=JSON.stringify(bkObj());(navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Backup copied"),()=>toast("Copy isn’t available here — use Download"))};
+A.bkdl=async()=>{await deliver("hidden-backup-"+today()+".json",new Blob([JSON.stringify(bkObj())],{type:"application/json"}));try{localStorage.setItem("hid.bk",today())}catch(e){}render(true)};
+A.bkcp=()=>{const t=JSON.stringify(bkObj());(navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{try{localStorage.setItem("hid.bk",today())}catch(e){}toast("Backup copied");render(true)},()=>toast("Copy isn’t available here — use Download"))};
 function restore(txt){try{const o=JSON.parse(txt);if(!o||o.app!="hidden"||!o.data)throw 0;Object.keys(o.data).forEach(k=>{if(k.startsWith("hid."))try{localStorage.setItem(k,o.data[k])}catch(e){}});
   SET=Object.assign({},DEFSET,load("hid.set",{}));PS=load("hid.ps",[]);PG=load("hid.p",{});ST=load("hid.st",{d:{}});HL=load("hid.hl",{});CF=Object.assign({bg:0,ft:0,rt:0,sz:60,al:1,md:0,lv:1,note:""},load("hid.cf",{}));
   applyTheme();S.pi=0;toast("Backup restored");render();window.scrollTo(0,0)}catch(e){toast("That doesn’t look like a Hidden backup")}}
 let BKT="";I.bktxt=v=>{BKT=v};A.bkrs=()=>restore(BKT);
 C.bkfile=(v,t)=>{const f=t.files&&t.files[0];if(!f)return;f.text().then(restore)};
 /* start */
-render();
-
+/* ----- quick verse sharing and links ----- */
+function verseLink(code,c,s,e){const u=appUrl();return u?u+"#"+code+"."+c+"."+s+(e&&e!=s?"-"+e:""):""}
+function giveText(t,ok,m){const manual=()=>{S.cpt={t,m:m||"Press and hold to select, then copy."};render(true);setTimeout(()=>{const x=document.getElementById("cpt");if(x){x.focus();x.select()}},50)};
+  try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(()=>toast(ok),manual);return}}catch(e){}manual()}
+function shareVerse(code,c,s,e){const p=resolve({id:"x",code,c,s,e}),q="“"+p.v.join(" ").replace(/\s+/g," ")+"” — "+p.ref+" (BSB)",u=verseLink(code,c,s,e),t=u?q+"\n"+u:q;
+  if(navigator.share){try{navigator.share(u?{title:p.ref,text:q,url:u}:{title:p.ref,text:q}).catch(er=>{if(!er||er.name!="AbortError")giveText(t,"Verse copied","Sharing isn’t available here. Copy your verse:")})}catch(er){giveText(t,"Verse copied","Sharing isn’t available here. Copy your verse:")}}
+  else giveText(t,"Verse copied","Copy your verse:")}
+A.shv=()=>{const ch=BIBLE[S.b][2][S.c];shareVerse(BIBLE[S.b][0],S.c+1,ch.n[S.sel.a],ch.n[S.sel.z])};
+A.tdsh=()=>{const d=votd();shareVerse(d.code,d.c,d.s,d.e)};
+function openHash(h){const m=(h==null?location.hash:h).match(/^#([1-3]?[A-Za-z]{2,3})\.(\d+)\.(\d+)(?:-(\d+))?$/);if(!m)return false;
+  const b=bidx(m[1].toUpperCase());if(b<0)return false;const c=+m[2]-1,ch=BIBLE[b][2][c];if(!ch)return false;
+  const a=ch.n.indexOf(+m[3]);if(a<0)return false;let z=m[4]?ch.n.indexOf(+m[4]):a;if(z<a)z=a;
+  A.go([b,c,a,z,1].join(","));return true}
+addEventListener("hashchange",()=>openHash());
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}catch(e){}
+const SITE_URL="https://keyportbiblechurch.github.io/Hidden/";
+function appUrl(){if(SITE_URL&&SITE_URL.indexOf("__")<0)return SITE_URL;try{if(/^https?:$/.test(location.protocol)&&!/claude\.(ai|com)$/.test(location.hostname)&&!/\.claudeusercontent\.com$/.test(location.hostname))return location.origin+location.pathname}catch(e){}return""}
+A.shapp=()=>{const u=appUrl(),t="Hidden is a free, private Bible app with Scripture memory and verse cards.";if(navigator.share){try{navigator.share({title:"Hidden",text:t,url:u}).catch(er=>{if(!er||er.name!="AbortError")A.cpapp()})}catch(er){A.cpapp()}}else A.cpapp()};
+A.cpapp=()=>giveText(appUrl(),"Link copied","Copy the link:");
+render();openHash();
 
 </script>
 <script>if("serviceWorker"in navigator&&location.protocol=="https:")addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))</script>
