@@ -2497,16 +2497,16 @@ const bidx=c=>BIBLE.findIndex(b=>b[0]==c);
 const bname=c=>BIBLE[bidx(c)][1];
 const refLabel=(code,c,s,e)=>bname(code)+" "+c+":"+s+(e>s?"–"+e:"");
 const vid=(code,c,n)=>code+"."+c+"."+n;
-let toastT;function toast(m){let t=$("toast");if(!t){t=document.createElement("div");t.id="toast";t.className="toast";document.body.appendChild(t)}t.textContent=m;t.style.display="block";clearTimeout(toastT);toastT=setTimeout(()=>t.style.display="none",2400)}
+let toastT;function toast(m,ms){let t=$("toast");if(!t){t=document.createElement("div");t.id="toast";t.className="toast";document.body.appendChild(t)}t.textContent=m;t.style.display="block";clearTimeout(toastT);toastT=setTimeout(()=>t.style.display="none",2400)}
 
 /* ===== state ===== */
-const DEFSET={theme:"auto",size:22,site:"",qr:false,font:"",lh:1,ta:0,vl:false,vn:true,rate:1,voice:"",auto:false};
+const DEFSET={theme:"auto",size:22,site:"",qr:false,font:"",lh:1,ta:0,vl:false,vn:true,rate:1,voice:"",auto:false,sbk:null};
 let SET=Object.assign({},DEFSET,load("hid.set",{}));
 let PS=load("hid.ps",[["ps119","PSA",119,11,11],["jn3","JHN",3,16,16],["eph2","EPH",2,8,9],["ps23","PSA",23,1,6],["jn1","JHN",1,1,5]].map(d=>({id:d[0],code:d[1],c:d[2],s:d[3],e:d[4]})));
 let PG=load("hid.p",{}),ST=load("hid.st",{d:{}}),HL=load("hid.hl",{});
 const pos=load("hid.pos",{b:bidx("JHN"),c:2});
 const S={top:false,tab:"today",sub:"chap",b:pos.b,c:pos.c,sel:null,q:"",res:null,pi:0,mode:"fade",lv:0,chk:false,peek:new Set(),msg:"",rv:null,ph:0,ph_show:false,typed:"",tres:null,hint:false,ov:null,pl:null,pk:null,cd:{code:"JHN",c:3,s:16,e:16},cside:0,xp:null};
-const sv={set:()=>save("hid.set",SET),ps:()=>save("hid.ps",PS),pg:()=>save("hid.p",PG),st:()=>save("hid.st",ST),hl:()=>save("hid.hl",HL)};
+const sv={set:()=>save("hid.set",SET),ps:()=>save("hid.ps",PS),pg:()=>save("hid.p",PG),st:()=>save("hid.st",ST),hl:()=>{save("hid.hl",HL);try{if(Object.keys(HL).length&&!localStorage.getItem("hid.nt")){localStorage.setItem("hid.nt","1");toast("Saved on this device only. Back up anytime in More → Backup and data.",6500)}}catch(e){}}};
 const FONTS=[["","Serif",null],["sans","Sans",'system-ui,"Segoe UI",Helvetica,Arial,sans-serif']];
 if(!FONTS.some(f=>f[0]==SET.font))SET.font="";
 const LHS=[1.5,1.72,1.95];
@@ -2558,11 +2558,11 @@ function parseRef(q){const m=q.match(/^\s*((?:[1-3]|iii|ii|i|first|second|third)
 
 /* ===== full-text search ===== */
 let IDX=null;
-function search(q){if(!IDX){IDX=[];BIBLE.forEach((b,bi)=>b[2].forEach((ch,ci)=>ch.v.forEach((v,i)=>IDX.push([bi,ci,i,v.toLowerCase().replace(/\s+/g," ")]))))}
+function search(q,sc){if(!IDX){IDX=[];BIBLE.forEach((b,bi)=>b[2].forEach((ch,ci)=>ch.v.forEach((v,i)=>IDX.push([bi,ci,i,v.toLowerCase().replace(/\s+/g," ")]))))}
   q=q.trim().toLowerCase();if(!q)return{hits:[],total:0,terms:[]};
   const ph=q.match(/^"(.+)"$/),terms=ph?[ph[1]]:q.split(/\s+/).filter(Boolean).map(t=>t.replace(/[^\w’'-]/g,"")).filter(Boolean);
   if(!terms.length)return{hits:[],total:0,terms:[]};const hits=[];let total=0;
-  for(const x of IDX){if(terms.every(t=>x[3].includes(t))){total++;if(hits.length<150)hits.push(x)}}
+  for(const x of IDX){if(sc&&!sc.has(x[0]))continue;if(terms.every(t=>x[3].includes(t))){total++;if(hits.length<150)hits.push(x)}}
   return{hits,total,terms}}
 function hiTerms(t,terms){let h=esc(t);terms.forEach(w=>{const re=new RegExp("("+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","ig");h=h.replace(re,"<mark>$1</mark>")});return h}
 
@@ -2713,6 +2713,18 @@ A.mem1=()=>{const ch=BIBLE[S.b][2][S.c],i=addPassage(BIBLE[S.b][0],S.c+1,ch.n[S.
 A.mkc=()=>{const ch=BIBLE[S.b][2][S.c];S.cd={code:BIBLE[S.b][0],c:S.c+1,s:ch.n[S.sel.a],e:ch.n[S.sel.z]};S.sel=null;S.tab="card";render();window.scrollTo(0,0)};
 A.go=v=>{const p=v.split(",").map(Number);openCh(p[0],p[1]);S.tab="read";S.sub="chap";if(p[2]>=0){if(p[4]){S.fl={a:p[2],z:p[3]};S.scr=p[2]}else if(p[3]!=null&&!isNaN(p[3])){S.sel={a:p[2],z:p[3]};S.scr=p[2]}else{S.scr=p[2];S.fl={a:p[2],z:p[2]}}}const tgt=S.scr!=null;render();if(!tgt)window.scrollTo(0,0)};
 
+/* search scope */
+const SCOPES=[["all","Whole Bible",null],["ot","Old Testament",[0,38]],["nt","New Testament",[39,65]],["law","Law",[0,4]],["his","History",[5,16]],["poe","Poetry",[17,21]],["pro","Prophets",[22,38]],["gos","Gospels",[39,42]],["act","Acts",[43,43]],["pau","Paul’s letters",[44,56]],["gen","General letters",[57,64]],["rev","Revelation",[65,65]]];
+const rng=a=>{const o=[];for(let i=a[0];i<=a[1];i++)o.push(i);return o};
+const scopeSet=()=>SET.sbk&&SET.sbk.length&&SET.sbk.length<66?new Set(SET.sbk):null;
+function scopeKey(){const s=scopeSet();if(!s)return"all";const k=SCOPES.find(x=>x[2]&&rng(x[2]).length==s.size&&rng(x[2]).every(i=>s.has(i)));return k?k[0]:"custom"}
+function scopeName(){const k=scopeKey();if(k=="all")return"";if(k=="custom"){const s=scopeSet();return s.size==1?BIBLE[[...s][0]][1]:s.size+" books"}return SCOPES.find(x=>x[0]==k)[1]}
+A.sfp=v=>{const k=SCOPES.find(x=>x[0]==v);SET.sbk=k&&k[2]?rng(k[2]):null;S.sbo=false;sv.set();render(true)};
+A.sfo=()=>{S.sbo=!S.sbo;render(true)};
+A.sfb=v=>{const s=new Set(scopeSet()||[]);s.has(+v)?s.delete(+v):s.add(+v);SET.sbk=s.size?[...s].sort((a,b)=>a-b):null;sv.set();render(true)};
+function scopeUi(){const k=scopeKey(),ch=(id,l,on)=>`<button class="chip ${on?"on":""}" data-a="sfp" data-v="${id}">${l}</button>`;
+  return `<div class="chips" style="margin-top:8px">${SCOPES.map(x=>ch(x[0],x[1],k==x[0])).join("")}<button class="chip ${k=="custom"||S.sbo?"on":""}" data-a="sfo">${k=="custom"?esc(scopeName()):"Choose books"}</button></div>`+
+   (S.sbo?`<div class="card" style="padding:12px 14px;margin:2px 0 10px"><div class="chips" style="flex-wrap:wrap;overflow-y:auto;max-height:210px;padding:0">${BIBLE.map((b,i)=>`<button class="chip ${scopeSet()&&scopeSet().has(i)?"on":""}" data-a="sfb" data-v="${i}" style="min-height:32px;padding:3px 11px;font-size:13px">${esc(b[1])}</button>`).join("")}</div></div>`:"")}
 /* search */
 const smode=()=>SET.sm==1?1:0;
 function resultsHtml(){
@@ -2725,19 +2737,21 @@ function resultsHtml(){
   if(pr&&pr.hasC)return o;
   if(m){const tp=topicSearch(q);
     if(!tp.length)return o+`<p class="mut cen" style="margin-top:18px">No topic matches “${esc(q)}”. Try another word, or <button class="xr" data-a="smode" data-v="0">search by keyword</button> instead.</p>`;
-    tp.forEach(t=>{o+=`<div class="lbl">Topic · ${esc(t[0])}</div>`+topicRefs(t).map(r=>{const p=resolve({id:"t",code:r.code,c:r.c+1,s:r.s,e:r.e});return `<div class="card" style="padding:12px 14px;margin:8px 0;cursor:pointer" data-a="go" data-v="${r.b},${r.c},${r.a},${r.z},1"><div class="ref">${esc(p.ref)}</div><div style="font-size:18px;line-height:1.5">${esc(p.v.join(" "))}</div></div>`}).join("")});
+    tp.forEach(t=>{const rf=topicRefs(t).filter(x=>!scopeSet()||scopeSet().has(x.b));if(!rf.length)return;o+=`<div class="lbl">Topic · ${esc(t[0])}</div>`+rf.map(r=>{const p=resolve({id:"t",code:r.code,c:r.c+1,s:r.s,e:r.e});return `<div class="card" style="padding:12px 14px;margin:8px 0;cursor:pointer" data-a="go" data-v="${r.b},${r.c},${r.a},${r.z},1"><div class="ref">${esc(p.ref)}</div><div style="font-size:18px;line-height:1.5">${esc(p.v.join(" "))}</div></div>`}).join("")});
+    if(!o.includes("Topic ·"))o+=`<p class="mut cen" style="margin-top:18px">No ${esc(q)} verses from this topic in ${esc(scopeName())}. Try the whole Bible.</p>`;
     return o}
-  const r=search(q);
-  o+=`<div class="lbl">${r.total?r.total+" verse"+(r.total==1?"":"s")+(r.total>r.hits.length?" · showing first "+r.hits.length:""):"No matches"}</div>`;
+  const sc=scopeSet(),r=search(q,sc);
+  o+=`<div class="lbl">${r.total?r.total+" verse"+(r.total==1?"":"s")+(sc?" in "+esc(scopeName()):"")+(r.total>r.hits.length?" · showing first "+r.hits.length:""):"No matches"}</div>`;
   o+=r.hits.map(h=>{const ch=BIBLE[h[0]][2][h[1]];return `<div class="card" style="padding:12px 14px;margin:8px 0;cursor:pointer" data-a="go" data-v="${h[0]},${h[1]},${h[2]}"><div class="ref">${esc(BIBLE[h[0]][1])} ${h[1]+1}:${ch.n[h[2]]}</div><div style="font-size:18px;line-height:1.5">${hiTerms(ch.v[h[2]].replace(/\s*\n\s*/g," "),r.terms)}</div></div>`}).join("");
   if(!r.total)o+=`<p class="mut cen">Nothing matched those words. Try <button class="xr" data-a="smode" data-v="1">searching by topic</button>.</p>`;
   return o}
 A.smode=v=>{SET.sm=+v;sv.set();render(true);const q=$("sq");if(q)q.focus()};
-function searchView(){return `${sg("smode",["Keyword","Topic"],smode())}<input id="sq" type="search" data-i="q" placeholder="${smode()?"A topic, like anxiety or forgiveness":"A word or phrase, or a reference"}" value="${esc(S.q)}" autocapitalize="none" autocomplete="off" style="margin-top:2px"><div id="res">${resultsHtml()}</div>`}
+function searchView(){return `${sg("smode",["Keyword","Topic"],smode())}<input id="sq" type="search" data-i="q" placeholder="${smode()?"A topic, like anxiety or forgiveness":"A word or phrase, or a reference"}" value="${esc(S.q)}" autocapitalize="none" autocomplete="off" style="margin-top:2px">${scopeUi()}<div id="res">${resultsHtml()}</div>`}
 let qT;I.q=v=>{S.q=v;clearTimeout(qT);qT=setTimeout(()=>{const r=$("res");if(r)r.innerHTML=resultsHtml()},180)};
 
 /* marked */
 S.mf=0;
+A.mbk=()=>{S.tab="more";S.mv="data";S.pk=null;render();window.scrollTo(0,0)};
 A.mfl=v=>{S.mf=+v;render(true)};
 function markedView(){
   const ks=Object.keys(HL).filter(k=>{const h=HL[k];return S.mf==0||(S.mf==1&&h.b)||(S.mf==2&&h.c)||(S.mf==3&&h.n)});
@@ -2745,7 +2759,7 @@ function markedView(){
   ks.sort((x,y)=>{const a=parse(x),b=parse(y);return a.b-b.b||a.c-b.c||a.n-b.n});
   const o=ks.map(k=>{const p=parse(k),ch=BIBLE[p.b][2][p.c],i=ch?ch.n.indexOf(p.n):-1;if(i<0)return"";const h=HL[k],c=h.c?(HC.find(x=>x[0]==h.c)||[0,""])[1]:"";
     return `<div class="card" style="padding:12px 14px;margin:8px 0;cursor:pointer" data-a="go" data-v="${p.b},${p.c},${i}"><div class="ref">${esc(BIBLE[p.b][1])} ${p.c+1}:${p.n}${h.b?" ★":""}</div><div class="${c}" style="font-size:18px;line-height:1.5;display:inline">${esc(ch.v[i].replace(/\s*\n\s*/g," "))}</div>${h.n?`<div class="fn" style="margin-top:6px">✎ ${esc(h.n)}</div>`:""}</div>`}).join("");
-  return `<div class="chips">${["All","★ Bookmarks","Highlights","Notes"].map((x,i)=>`<button class="chip ${i==S.mf?"on":""}" data-a="mfl" data-v="${i}">${x}</button>`).join("")}</div>`+(o||`<p class="mut cen" style="margin-top:30px">Nothing marked yet. Tap a verse in Chapter view to highlight, bookmark, or add a note.</p>`)}
+  return `${ks.length?`<p class="mut" style="margin:0 0 12px">Saved on this device only. <button data-a="mbk" style="all:unset;cursor:pointer;text-decoration:underline">Back up</button> so you never lose them.</p>`:""}<div class="chips">${["All","★ Bookmarks","Highlights","Notes"].map((x,i)=>`<button class="chip ${i==S.mf?"on":""}" data-a="mfl" data-v="${i}">${x}</button>`).join("")}</div>`+(o||`<p class="mut cen" style="margin-top:30px">Nothing marked yet. Tap a verse in Chapter view to highlight, bookmark, or add a note.</p>`)}
 
 /* ===== speech ===== */
 const TTS=("speechSynthesis" in window)&&typeof SpeechSynthesisUtterance!="undefined";
